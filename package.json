@@ -25,8 +25,9 @@
     "tsc": "tsc",
     "start:dev": "nodemon",
     "build": "rimraf ./dist && tsc",
-    "start": "yarn run build && node build/index.js",
-    "test": "jest"
+    "start": "yarn run build && node dist/index.js",
+    "test": "jest",
+    "migrate" : "node dist/bin/migrate.js"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.12.7",
