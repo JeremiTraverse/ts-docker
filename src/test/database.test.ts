@@ -6,7 +6,7 @@ beforeAll(async () => {
 
 test('create person', async () => {
     expect.assertions(1);
-    const person = await db.Person.create({
+    const person = await db.User.create({
         id: 1,
         firstName: 'Bobbie',
         lastName: 'Draper'
