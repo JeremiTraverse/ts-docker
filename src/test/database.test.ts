@@ -8,9 +8,11 @@ test('create person', async () => {
     expect.assertions(1);
     const person = await db.User.create({
         id: 1,
-        firstName: 'Bobbie',
-        lastName: 'Draper'
+        name: 'Bobbie',
+        email: 'bobbie@bobbie.com',
+        password: "testestestest"
     });
     expect(person.id).toEqual(1);
+    
 });
 
