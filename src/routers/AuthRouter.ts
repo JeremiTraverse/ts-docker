@@ -2,7 +2,9 @@ import { Router , Request} from "express";
 import db from "../database";
 import bcrypt from "bcrypt";
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
+import { generateToken, authenticateToken } from "../bin/auth";
+import { User, IGetUserAuthInfoRequest } from "../types";
+
 dotenv.config();
 
 let AuthRouter = Router();
@@ -40,10 +42,11 @@ AuthRouter.post('/login', async (req, res) => {
                 const isPasswordValid = bcrypt.compareSync(req.body.password, response.password);
                 console.log("email found hihi", isPasswordValid); 
                 if(isPasswordValid) {
-                    const user = {username: response.username, password: response.password}
+                    const user = {email: response.email, password: response.password, name: response.name}
                     console.log("Loggin successfull"); 
-                    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn : "10m"})
-                    res.json(accessToken);
+                    const accessToken = generateToken(user, "access");
+                    const refreshToken = generateToken(user, "refresh");
+                    res.json({accessToken, refreshToken});
                 } else {
                     res.send("Wrong password");
                     console.log("Wrong password");
@@ -55,6 +58,11 @@ AuthRouter.post('/login', async (req, res) => {
             }
         })
 });
+
+
+AuthRouter.get('/posts', authenticateToken, (req: IGetUserAuthInfoRequest, res) => {
+  res.json("worked")
+})
 
 
 export default AuthRouter 
