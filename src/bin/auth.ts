@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import dotenv from "dotenv";
-import { IGetUserAuthInfoRequest } from "../types";
+import {IRequestSession} from "../types";
+import db from "../database";
+
 dotenv.config();
 
 interface User {
@@ -9,40 +12,40 @@ interface User {
     name: String
 }
 
-let refreshTokens = [];
-
-export function refreshToken(req) {
-    console.log(req);
-    const refreshToken = req.body.refreshToken;
-    if (refreshToken == null) return 401; 
-    if (!refreshTokens.includes(refreshToken)) return 403;
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-        if(err) return 403;
-        const accessToken = generateToken({name: user.name}, "access");
-        return accessToken;
-    })
-
-}
-
-export function authenticateToken(req : IGetUserAuthInfoRequest, res, next) {
-    const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    if (token == null) return res.sendStatus(401);
-
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-        if (err){ 
-            refreshToken(req);
+export async function authenticateSession(req : IRequestSession , res, next) {
+  const sessionId = req.session.sessionId;
+  console.log(sessionId);
+  if(req.path === "/auth/login") {next()}
+  if(sessionId) {
+    await db.Sessions.findOne({where: {sessionId : sessionId}})
+      .then(response => {
+        if(response !== null){
+          next();
         }
-        req.user = user;
-        next();
-   })
+        else {
+          res.sendStatus(403);
+        }
+      })
+  }
+  else {
+    res.sendStatus(401);
+  }
 }
 
-export function generateToken(user : User, tokenType : String ) {
-    if(tokenType == "refresh")  return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET); 
-
-    if(tokenType == "access" ) return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "10s"});
+export function generateToken(user : User) {
+     return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
 }
 
+export function decypherToken(token) {
+  return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
+    if(err) {
+      return err;
+    } else {
+      return decoded;
+    }
+  })
+}
 
+export function generateRandomString() {
+  return crypto.randomBytes(64).toString('hex');
+}

@@ -3,10 +3,14 @@ const Sequelize = require('sequelize');
 const sequelize = new Sequelize("postgres://jeremitraverse:@localhost:5432/popinadev")
 
 const Sessions = sequelize.define('Sessions', {
-    rToken : {
-        type: Sequelize.STRING,
-        allowNull: false
-    }
+ sessionUser : {
+    type: Sequelize.STRING(500),
+    allowNull: false
+  },
+  sessionId : {
+    type: Sequelize.STRING(500),
+    allowNull: true
+  }
 }, {freezeTableName: true})
 
 const User = sequelize.define('User', {
@@ -24,4 +28,4 @@ const User = sequelize.define('User', {
     },
 },{freezeTableName: true});
 
-export default {User, Sessions, sequelize }
+export default {Sessions, sequelize, User}
