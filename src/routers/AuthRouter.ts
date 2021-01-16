@@ -3,7 +3,7 @@ import db from "../database";
 import bcrypt from "bcrypt";
 import dotenv from 'dotenv';
 import { generateToken, generateRandomString, authenticateSession, decypherToken } from "../bin/auth";
-import { IRequestSession } from "../types";
+import { IRequestSession, User } from "../types";
 
 dotenv.config();
 
@@ -15,7 +15,6 @@ AuthRouter.post('/register', async (req : Request, res) => {
     let password = req.body.password;
     const salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUND));
     const hashedPw = bcrypt.hashSync(password, salt);   
-
     db.User.findOne({where: {email:email}})
         .then(response => {
             if(response !== null) {
@@ -44,6 +43,7 @@ AuthRouter.post('/login', async (req : IRequestSession, res) => {
                     // create session
                     db.Sessions.create({sessionUser : accessToken, sessionId: sessionId});
                     // save sessionId into a cookie
+                    req.session.userEmail = response.email;
                     req.session.sessionId = sessionId;
                     res.send({"success": "User is logged in"})
                 } else {
@@ -72,5 +72,19 @@ AuthRouter.post("/logout", authenticateSession, async (req : IRequestSession, re
     res.send({"success" : "Logout sucessful"});
   }
 })
+
+AuthRouter.post('/reset-password', authenticateSession, async (req : IRequestSession, res) => {
+  const newPassword = req.body.newPassword;
+  const salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUND));
+  const hashedPw = bcrypt.hashSync(newPassword, salt);   
+  const user = await db.User.findOne({where : {email : req.session.userEmail}});
+  if (!user) {
+    res.send({"error" : "Couldnt find the user"});
+  }
+
+  user.password = hashedPw;
+  await user.save();
+  res.send({"success" : "Password has been reseted sucessfully"});
+});
 
 export default AuthRouter 

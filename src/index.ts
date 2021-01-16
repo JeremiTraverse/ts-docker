@@ -3,7 +3,6 @@ import "dotenv/config";
 import cors from "cors";
 import AuthRouter from "./routers/AuthRouter";
 import db from "./database";
-import {authenticateSession} from "./bin/auth";
 
 var cookieParser = require("cookie-parser")
 var session = require("express-session")
@@ -16,14 +15,13 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.json());
 app.use(cookieParser());
 app.use(session({
-    secret: 'somerandonstuffs',
+    secret: process.env.SESSION_TOKEN_SECRET, 
     resave: false,
     saveUninitialized: true,
   })
-)
+);
 
 app.get("/", (_, res) => {
-    console.log('called');
     res.send("dockering ts");
 });
 

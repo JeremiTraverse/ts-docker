@@ -37,13 +37,8 @@ export function generateToken(user : User) {
 }
 
 export function decypherToken(token) {
-  return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
-    if(err) {
-      return err;
-    } else {
-      return decoded;
-    }
-  })
+  const decoded = jwt.decode(token);
+  return decoded;
 }
 
 export function generateRandomString() {
