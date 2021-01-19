@@ -1,4 +1,5 @@
 import { Router , Request} from "express";
+import nodemailer from "nodemailer";
 import db from "../database";
 import bcrypt from "bcrypt";
 import dotenv from 'dotenv';
@@ -71,6 +72,10 @@ AuthRouter.post("/logout", authenticateSession, async (req : IRequestSession, re
     await session.save();
     res.send({"success" : "Logout sucessful"});
   }
+})
+
+AuthRouter.post('/forgot-password', async (req: IRequestSession, res) => {
+    
 })
 
 AuthRouter.post('/reset-password', authenticateSession, async (req : IRequestSession, res) => {
