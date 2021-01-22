@@ -1,11 +1,10 @@
 import { Router , Request} from "express";
-import nodemailer from "nodemailer";
 import db from "../database";
 import bcrypt from "bcrypt";
 import dotenv from 'dotenv';
-import { generateToken, generateRandomString, authenticateSession, decypherToken } from "../bin/auth";
-import { IRequestSession, User } from "../types";
-
+import { generateToken, generateRandomString, authenticateSession, decypherToken, hashPassword } from "../bin/auth";
+import { IRequestSession, User, IForgotPassword } from "../types";
+import {getUser} from "../bin/queries";
 dotenv.config();
 
 let AuthRouter = Router();
@@ -42,7 +41,12 @@ AuthRouter.post('/login', async (req : IRequestSession, res) => {
                     const accessToken = generateToken(user);
                     const sessionId = generateRandomString(); 
                     // create session
-                    db.Sessions.create({sessionUser : accessToken, sessionId: sessionId});
+                    try {
+                      db.Sessions.create({sessionUser : accessToken, sessionId: sessionId});
+                    } catch(err) {
+                      res.send({"err" : `coudlnt create the session : ${err}` })
+
+                    }
                     // save sessionId into a cookie
                     req.session.userEmail = response.email;
                     req.session.sessionId = sessionId;
@@ -63,30 +67,40 @@ AuthRouter.get('/posts', authenticateSession, async (req: IRequestSession, res) 
 
 AuthRouter.post("/logout", authenticateSession, async (req : IRequestSession, res) => {
   const sessionId = req.session.sessionId;
-  const session = await db.Sessions.findOne({where : {sessionId : sessionId}});
-  if(!session) {
-    res.send({"error": "No session found for the user"});
-  }
-  else {
-    session.sessionId = null;
-    await session.save();
-    res.send({"success" : "Logout sucessful"});
+  try {
+    const session = await db.Sessions.findOne({where : {sessionId : sessionId}});
+    if(!session) {
+      res.send({"error": "No session found for the user"});
+    }
+    else {
+      session.sessionId = null;
+      await session.save();
+      res.send({"success" : "Logout sucessful"});
+    }
+  } catch(err) {
+    res.send({"error" : `coudlnt find the session : ${err}`});
   }
 })
 
-AuthRouter.post('/forgot-password', async (req: IRequestSession, res) => {
-    
+AuthRouter.post('/forgot-password', async (req : IForgotPassword, res) => {
+  const newPassword = await hashPassword(req.body.newPassword);
+  const user = await getUser(req.body.email)
+  if(!user) {
+    res.send({"error" : "Couldnt find the user"});
+  }
+  user.password = newPassword;
+  await user.save();
+  res.send({"success" : "User's password changed successfuly"});
 })
 
 AuthRouter.post('/reset-password', authenticateSession, async (req : IRequestSession, res) => {
   const newPassword = req.body.newPassword;
   const salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUND));
   const hashedPw = bcrypt.hashSync(newPassword, salt);   
-  const user = await db.User.findOne({where : {email : req.session.userEmail}});
+  const user = await getUser(req.body.password) 
   if (!user) {
     res.send({"error" : "Couldnt find the user"});
   }
-
   user.password = hashedPw;
   await user.save();
   res.send({"success" : "Password has been reseted sucessfully"});

@@ -3,13 +3,20 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import {IRequestSession} from "../types";
 import db from "../database";
+import bcrypt from "bcrypt";
 
 dotenv.config();
 
 interface User {
-    email?: String,
-    password?: String,
-    name: String
+  email?: String,
+  password?: String,
+  name: String
+}
+
+export async function hashPassword (password : String){
+  const salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUND));
+  const hashedPassword = bcrypt.hashSync(password, salt)
+  return hashedPassword; 
 }
 
 export async function authenticateSession(req : IRequestSession , res, next) {
@@ -33,7 +40,7 @@ export async function authenticateSession(req : IRequestSession , res, next) {
 }
 
 export function generateToken(user : User) {
-     return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
 }
 
 export function decypherToken(token) {

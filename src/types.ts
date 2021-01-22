@@ -7,10 +7,14 @@ export interface User {
 }
 
 export interface IGetUserAuthInfoRequest extends Request {
-  user: User// or any other type
+  user: User
 }
 
 export interface IRequestSession extends Request {
   session: any
 }
 
+export interface IForgotPassword extends Request {
+  newPassword : String,
+  email: String
+}

@@ -7,7 +7,7 @@
     "sourceMap": true,
     "outDir": "dist"
   },
-  "lib": ["es2015", "es2018.promise"],
+  "lib": ["es2017", "es2018.promise"],
   "typeRoots": [
       "@types",
       "./node_modules/@types"

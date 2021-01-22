@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 });
 
 EmailRouter.post('/forgot-password', (req : IRequestSession, res) => {
- const destEmail = req.session.userEmail;
+ const destEmail = req.body.email;
  const mailOptions = {
   from: process.env.MY_EMAIL,
   to: destEmail,
